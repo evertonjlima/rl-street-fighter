@@ -1,0 +1,20 @@
+
+services:
+  emulator:
+    build:
+      context: ./docker
+    container_name: street_fighter_ai
+    volumes:
+      - .:/home/user/
+    ports:
+      - "8888:8888"                     # Expose port for Jupyter Notebook
+    stdin_open: true
+    tty: true
+    shm_size: 4g
+    deploy:
+      resources:
+        limits:
+          memory: 16g
+    command: >
+      sh -c "pip install -e /home/user &&
+             jupyter notebook --ip=0.0.0.0 --no-browser --allow-root --NotebookApp.token='' --NotebookApp.password=''"
