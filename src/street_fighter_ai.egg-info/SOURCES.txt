@@ -6,12 +6,12 @@ makefile
 pyproject.toml
 setup.py
 config/gym-config.json
-config/hyperparams.yaml
 docker/Dockerfile
 notebooks/airstriker-genesis-test.ipynb
 notebooks/basic_agent_setup.ipynb
 notebooks/street-fighter.ipynb
 src/street_fighter_ai/__init__.py
+src/street_fighter_ai/config_loader.py
 src/street_fighter_ai/main.py
 src/street_fighter_ai/play.py
 src/street_fighter_ai/preprocess.py

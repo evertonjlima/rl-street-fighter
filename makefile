@@ -4,7 +4,6 @@ DOCKER_IMAGE = street-fighter-ai-emulator
 VOLUME_MOUNT = $(shell pwd):/home/user
 ROOMS_DIR = roms
 CLI_PATH = /home/user/src/street_fighter_ai/main.py
-RECORDING_FILE = /home/user/recordings/StreetFighterIISpecialChampionEdition-Genesis-Champion.Level1.RyuVsGuile-*.bk2
 
 import-roms:
 	@echo "Importing ROMs from $(ROMS_DIR) using Retro Gym..."

@@ -93,7 +93,7 @@ class DQNAgent(BaseAgent):
         lr=0.001,
         batch_size=16,
         epsilon_start=1.0,
-        epsilon_end=0.1,
+        epsilon_end=0.05,
         epsilon_decay=1e-6,
         target_update_freq=24_000,
         replay_capacity=35_000,
@@ -299,5 +299,6 @@ class DQNAgent(BaseAgent):
         self.policy_network.load_state_dict(checkpoint["policy_network"])
         self.target_network.load_state_dict(checkpoint["target_network"])
         self.optimizer.load_state_dict(checkpoint["optimizer"])
-        self.epsilon = checkpoint["epsilon"]
+        # self.epsilon = checkpoint["epsilon"]
+        self.epsilon = 0.5
         self.learn_step_counter = checkpoint["learn_step_counter"]
