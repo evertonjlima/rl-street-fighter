@@ -3,33 +3,25 @@
 import numpy as np
 import torch
 
+import cv2
+import numpy as np
 
-def rgb2gray_luminance(frame: np.ndarray) -> np.ndarray:
-    """
-    Convert an RGB frame to grayscale using the standard luminance formula:
-      Gray = 0.299 * R + 0.587 * G + 0.114 * B
+def preprocess_image(rgb_array, target_size=(96, 96)):
+    # Convert RGB to Grayscale
+    grayscale = cv2.cvtColor(rgb_array, cv2.COLOR_RGB2GRAY)
 
-    frame: A NumPy array of shape (H, W, 3) in HWC format
-    returns: A NumPy array of shape (H, W), representing the grayscale image
-    """
-    # Ensure the input has the right shape
-    if frame.shape[-1] != 3:
-        raise ValueError(f"Expected last dimension = 3 for RGB, got {frame.shape}")
+    # Ensure image is uint8 (0-255 range)
+    grayscale = np.clip(grayscale, 0, 255).astype(np.uint8)
 
-    # Apply the luminance formula
-    # frame[..., 0] = R, frame[..., 1] = G, frame[..., 2] = B
-    return 0.299 * frame[..., 0] + 0.587 * frame[..., 1] + 0.114 * frame[..., 2]
+    # Enhance contrast using Histogram Equalization
+    equalized = cv2.equalizeHist(grayscale)
 
+    # Resize to target size
+    resized = cv2.resize(equalized, target_size, interpolation=cv2.INTER_AREA)
 
-def stack_frames_grayscale(frames):
-    """
-    Convert each of 4 frames (H, W, 3) to grayscale, then stack them
-    along the channel dimension for use with a CNN.
+    return resized
 
-    frames: List of 4 NumPy arrays, each shape (H, W, 3) in HWC format.
-    returns: A PyTorch tensor of shape (4, H, W) in CHW format,
-             i.e., 4 grayscale channels.
-    """
+def stack_frames(frames):
     stacked_list = []
     for f in frames:
         f_torch = torch.from_numpy(f).float().unsqueeze(0)

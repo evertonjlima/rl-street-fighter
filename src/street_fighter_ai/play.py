@@ -4,7 +4,7 @@ import numpy as np
 import retro
 from agents.base import BaseAgent
 from agents.dqn_agent import DQNAgent
-from preprocess import rgb2gray_luminance, stack_frames_grayscale
+from preprocess import preprocess_image, stack_frames
 from rich.console import Console
 from utils import pretty_print_info as pprint
 
@@ -144,7 +144,7 @@ def play_game(
     episodes: int = 100,
     frame_print_counter: int = 120,
     frame_stack_size: int = 4,
-    frame_skip: int = 1,
+    frame_skip: int = 3,
     agent: BaseAgent = DQNAgent(action_dim=20, state_shape=(4, 200, 256)),
     load_agent: bool = True,
     room: str = "StreetFighterIISpecialChampionEdition-Genesis",
@@ -196,11 +196,11 @@ def play_game(
     # 3. INITIAL FRAME PREPARATION
     # -------------------------------
     console.print("[bold green]--- PREPARING INITIAL FRAME STACK ---[/bold green]")
-    initial_gray = rgb2gray_luminance(initial_frame)
+    initial_gray = preprocess_image(initial_frame)
     frame_buffer = deque(
         [initial_gray for _ in range(frame_stack_size)], maxlen=frame_stack_size
     )
-    state = stack_frames_grayscale(frame_buffer)
+    state = stack_frames(frame_buffer)
     console.print("[bold blue]Initial State Shape:[/bold blue] ", state.shape)
 
     # ------------------------
@@ -240,9 +240,9 @@ def play_game(
                 # --------------------------------------------
                 # 4.3 CONVERT NEXT FRAME + UPDATE FRAME BUFFER
                 # --------------------------------------------
-                next_gray = rgb2gray_luminance(next_frame)
+                next_gray = preprocess_image(next_frame)
                 frame_buffer.append(next_gray)
-                next_state = stack_frames_grayscale(frame_buffer)
+                next_state = stack_frames(frame_buffer)
 
                 # -----------------------
                 # 4.4 CALCULATE REWARD
@@ -354,11 +354,11 @@ def play_game(
             "[bold green]--- RESETTING ENVIRONMENT FOR NEXT EPISODE ---[/bold green]"
         )
         initial_frame, info = env.reset()
-        initial_gray = rgb2gray_luminance(initial_frame)
+        initial_gray = preprocess_image(initial_frame)
         frame_buffer = deque(
             [initial_gray for _ in range(frame_stack_size)], maxlen=frame_stack_size
         )
-        state = stack_frames_grayscale(frame_buffer)
+        state = stack_frames(frame_buffer)
         info = initial_info
         score = 0
 

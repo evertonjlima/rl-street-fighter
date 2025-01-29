@@ -48,11 +48,9 @@ def train(
 
     console.print("[bold blue]Done![/bold blue]")
 
-
 @app.command()
 def collect():
-    """Collect data for training using random agent"""
-    console.print("[bold blue]Collecting data ... [/bold blue]")
+    pass;
 
 
 if __name__ == "__main__":

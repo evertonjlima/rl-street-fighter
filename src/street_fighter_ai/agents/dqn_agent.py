@@ -19,7 +19,7 @@ class ReplayBuffer:
 
     def push(self, state, action, reward, next_state, done):
         """
-        Add a single transition to the buffer.
+  Add a single transition to the buffer.
         """
         self.memory.append((state, action, reward, next_state, done))
 
@@ -49,7 +49,7 @@ class DQNetwork(nn.Module):
         self.conv1 = nn.Conv2d(in_channels, 8, kernel_size=kernel_size, stride=stride)
         self.conv2 = nn.Conv2d(8, 16, kernel_size=kernel_size, stride=stride)
 
-        self.fc1 = nn.Linear(16 * 47 * 61, 256)
+        self.fc1 = nn.Linear(16 * 21 * 21, 256)
         self.fc2 = nn.Linear(256, action_dim)
 
     def prepare_input(self, x: np.ndarray):

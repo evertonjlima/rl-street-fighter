@@ -31,7 +31,7 @@ RUN pip3 install git+https://github.com/Farama-Foundation/stable-retro.git
 # Install other Python dependencies
 RUN pip3 install stable-baselines3==1.6.2 jupyter matplotlib pandas numpy torch torchvision typer rich pytest
 RUN pip3 install --no-cache-dir pre-commit==3.4.0 black==23.9.1 isort==5.12.0
-RUN pip3 install pydantic
+RUN pip3 install pydantic opencv-python
 
 # Create directories for ROMs, logs, and notebooks
 RUN mkdir -p /home/user/roms /home/user/logs /home/user/config /home/user/notebooks

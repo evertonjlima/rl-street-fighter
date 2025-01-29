@@ -1,6 +1,6 @@
 
 
-in_agent_filepath: "dqn_checkpoint.pth"
+in_agent_filepath: null 
 out_agent_filepath: "./models/dqn_checkpoint.pth"
 
 train_play_game_settings:

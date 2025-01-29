@@ -21,6 +21,7 @@ data/
 
 # Notebooks
 .ipynb_checkpoints/
+notepad/
 
 # Environment
 .env
