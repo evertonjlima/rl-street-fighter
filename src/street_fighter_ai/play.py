@@ -3,7 +3,8 @@ from collections import deque
 import numpy as np
 import retro
 from agents.base import BaseAgent
-from agents.dqn_agent import DQNAgent
+# from agents.dqn_agent import DQNAgent
+from agents.dqn_recurrent_agent import RecurrentDQNAgent as DQNAgent
 from preprocess import preprocess_image, stack_frames
 from rich.console import Console
 from utils import pretty_print_info as pprint
@@ -145,7 +146,7 @@ def play_game(
     frame_print_counter: int = 120,
     frame_stack_size: int = 4,
     frame_skip: int = 1,
-    agent: BaseAgent = DQNAgent(action_dim=20, state_shape=(4, 200, 256)),
+    agent: BaseAgent = DQNAgent(action_dim=20, state_shape=(4, 96, 96)),
     load_agent: bool = True,
     room: str = "StreetFighterIISpecialChampionEdition-Genesis",
     render_mode: str = "rgb_array",
@@ -204,7 +205,7 @@ def play_game(
     state = initial_state
     console.print("[bold blue]Initial State Shape:[/bold blue] ", state.shape)
 
-    # ------------------------
+    # -----------------------
     # 4. START THE MAIN LOOP
     # ------------------------
     console.print("[bold green]--- STARTING GAME LOOP ---[/bold green]")
@@ -353,6 +354,9 @@ def play_game(
         episode_count += 1
         total_reward += episode_reward
         total_score += episode_score
+
+        # reset agent memory buffer
+        agent.reset()
 
         console.print(f"[bold green]Episode {episode_count} completed![/bold green]")
         console.print(f"\t[bold yellow]Episode Reward:[/bold yellow] {episode_reward}")

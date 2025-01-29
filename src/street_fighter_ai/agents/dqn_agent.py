@@ -278,6 +278,9 @@ class DQNAgent(BaseAgent):
             print("updating target network ...")
             self.update_target_network()
 
+    def reset(self):
+        pass;
+
     def save(self, filename="dqn_checkpoint.pth"):
         """
         Save model and optimizer states.
