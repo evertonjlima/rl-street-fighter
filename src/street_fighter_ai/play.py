@@ -122,7 +122,7 @@ def compute_reward(prev_state, current_state, prev_score, score, step_count):
     alpha = 10.0  # Positive reward scaling
     beta = 10.0  # Negative penalty scaling
     S = 0.3  # Positive score scaling
-    T = 0.01  # Time penalty scaling
+    T = 0.0  # Time penalty scaling
 
     # Base rewards
     reward_hit = alpha * enemy_health_lost
@@ -144,7 +144,7 @@ def play_game(
     episodes: int = 100,
     frame_print_counter: int = 120,
     frame_stack_size: int = 4,
-    frame_skip: int = 3,
+    frame_skip: int = 1,
     agent: BaseAgent = DQNAgent(action_dim=20, state_shape=(4, 200, 256)),
     load_agent: bool = True,
     room: str = "StreetFighterIISpecialChampionEdition-Genesis",
@@ -200,7 +200,8 @@ def play_game(
     frame_buffer = deque(
         [initial_gray for _ in range(frame_stack_size)], maxlen=frame_stack_size
     )
-    state = stack_frames(frame_buffer)
+    initial_state = stack_frames(frame_buffer)
+    state = initial_state
     console.print("[bold blue]Initial State Shape:[/bold blue] ", state.shape)
 
     # ------------------------
@@ -309,18 +310,26 @@ def play_game(
                         f"[bold yellow]step_count:[/bold yellow] {step_count}"
                     )
 
-                # -------------------------------
+                # 4.12 CHECK EPISODE COMPLETION
+                # -----------------------------
+                if (info["enemy_matches_won"] == 2) or done or truncated:
+                    break
+
                 # 4.11 FRAME SKIPPING / ROUND END
                 # -------------------------------
-                if info["matches_won"] == 2 or info["health"] < 0:
+                if info["health"] < 0 or info["enemy_health"] < 0:
+
                     console.print("[bold cyan]Skipping frames ...[/bold cyan]")
                     frame_skip_counter = 0
 
+                    pprint(info)
+
+                    # skip frames until game resets
                     while (
-                        next_info["health"] != 176 and next_info["enemy_health"] != 176
+                        info["health"] < 0 or info["enemy_health"] < 0
                     ):
                         frame_skip_counter += 1
-                        next_frame, next_score, done, truncated, next_info = env.step(
+                        next_frame, next_score, done, truncated, info = env.step(
                             neutral_action
                         )
 
@@ -328,13 +337,15 @@ def play_game(
                         f"[bold cyan]Skipped frames:[/bold cyan] {frame_skip_counter}"
                     )
                     console.print("[bold cyan]Resuming ...[/bold cyan]")
-                    step_count = 0  # reset step timer
 
-                # -----------------------------
-                # 4.12 CHECK EPISODE COMPLETION
-                # -----------------------------
-                if (info["enemy_matches_won"] == 2) or done or truncated:
-                    break
+                    # reset states for next round ...
+                    step_count = 0  
+                    next_info = info
+                    state = initial_state 
+
+
+
+
 
         # ----------------------------
         # 5. EPISODE COMPLETION LOGIC
