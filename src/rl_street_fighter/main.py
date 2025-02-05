@@ -1,3 +1,4 @@
+import pandas as pd
 import typer
 from agents.dqn_recurrent_agent import RecurrentDQNAgent
 from config_loader import load_config
@@ -39,12 +40,16 @@ def train(
         agent.load(filename=cfg.in_agent_filepath)
 
     console.print("[bold blue]Starting game training session... [/bold blue]")
-    play_game(agent=agent, **dict(cfg.train_play_game_settings))
+    results = play_game(agent=agent, **dict(cfg.train_play_game_settings))
     console.print("[bold blue]Exiting training session... [/bold blue]")
 
     console.print("[bold blue]Saving agent...")
     agent.save(filename=cfg.out_agent_filepath)
     console.print(f"[bold blue]Agent saved: {cfg.out_agent_filepath}")
+
+    console.print("[bold blue]Saving results...")
+    pd.DataFrame(results).to_csv(cfg.out_results_filepath)
+    console.print(f"[bold blue]Results saved: {cfg.out_results_filepath}")
 
     console.print("[bold blue]Done![/bold blue]")
 

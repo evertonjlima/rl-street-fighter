@@ -156,11 +156,10 @@ def compute_reward(prev_state, current_state, prev_score, score, step_count):
 
 def play_game(
     episodes: int = 100,
-    frame_print_counter: int = 120,
+    checkpoint_freq: int = 100,
     frame_stack_size: int = 4,
     frame_skip: int = 1,
     agent: BaseAgent = RecurrentDQNAgent(action_dim=20, state_shape=(4, 96, 96)),
-    load_agent: bool = True,
     room: str = "StreetFighterIISpecialChampionEdition-Genesis",
     render_mode: str = "rgb_array",
     record: str = "./recordings/",
@@ -170,11 +169,9 @@ def play_game(
 
     Parameters:
     - episodes (int): Number of episodes to play.
-    - frame_print_counter (int): Interval at which to log progress during each episode.
     - frame_stack_size (int): How many frames to stack for state representation.
     - frame_skip (int): Number of frames to skip (action repeats).
     - agent (BaseAgent): The agent class to instantiate.
-    - load_agent (bool): Whether to load a pre-trained model for the agent.
     - room (str): The game ROM to load.
     - render_mode (str): Rendering mode for the environment.
     - record (str): Path to save recordings.
@@ -337,9 +334,9 @@ def play_game(
         # ----------------------------
         episode_count += 1
 
-        if episode_count % 100 == 0:
-            agent.save()
-            pd.DataFrame(episode_results_list).to_csv("tmp_results.csv")
+        if episode_count % checkpoint_freq == 0:
+            agent.save("./tmp/dqn_checkpoint.pth")
+            pd.DataFrame(episode_results_list).to_csv("./tmp/tmp_results.csv")
 
         # -------------------------
         # 5.1 RESET FOR NEXT EPISODE
@@ -354,4 +351,4 @@ def play_game(
     env.close()
 
     console.print(f"[bold yellow]Total Episodes Played:[/bold yellow] {episode_count}")
-    pd.DataFrame(episode_results_list).to_csv("complete_results.csv")
+    return episode_results_list

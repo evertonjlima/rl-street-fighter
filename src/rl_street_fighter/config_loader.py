@@ -29,6 +29,7 @@ class AgentSettings(BaseModel):
 class Config(BaseModel):
     in_agent_filepath: Optional[Path] = None
     out_agent_filepath: Path
+    out_results_filepath: Path
     train_play_game_settings: TrainPlayGameSettings
     agent_settings: AgentSettings
 
