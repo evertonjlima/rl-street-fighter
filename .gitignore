@@ -24,4 +24,5 @@ data/
 notepad/
 
 # Environment
+./stable-retro/
 .env

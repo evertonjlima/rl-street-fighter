@@ -19,7 +19,7 @@ class ReplayBuffer:
 
     def push(self, state, action, reward, next_state, done):
         """
-  Add a single transition to the buffer.
+        Add a single transition to the buffer.
         """
         self.memory.append((state, action, reward, next_state, done))
 
@@ -279,7 +279,7 @@ class DQNAgent(BaseAgent):
             self.update_target_network()
 
     def reset(self):
-        pass;
+        pass
 
     def save(self, filename="dqn_checkpoint.pth"):
         """

@@ -1,10 +1,10 @@
 from collections import deque
 
 import numpy as np
+import pandas as pd
 import retro
 from agents.base import BaseAgent
-# from agents.dqn_agent import DQNAgent
-from agents.dqn_recurrent_agent import RecurrentDQNAgent as DQNAgent
+from agents.dqn_recurrent_agent import RecurrentDQNAgent
 from preprocess import preprocess_image, stack_frames
 from rich.console import Console
 from utils import pretty_print_info as pprint
@@ -23,13 +23,10 @@ def game_input_map(x: int):
 
     The index 'x' can range from 0 up to (len(button_map)-1).
 
-    The 12 bits correspond to Street Fighter button order from
-    your original code snippet:
+    The 12 bits correspond to Street Fighter button order:
         Index:  0   1   2   3   4   5   6   7   8   9   10  11
-        Label: MK  LK  ?   ?   UP  DN  RT  LT  HK  MP  LP  HP
-        (The ? bits are unused in your snippet.)
-
-    Adjust if your environment differs!
+        Label: MK  LK  X   X   UP  DN  RT  LT  HK  MP  LP  HP
+    X (start, select) was unused.
     """
 
     # Helper to combine (OR) two 12-bit lists
@@ -112,31 +109,47 @@ def compute_reward(prev_state, current_state, prev_score, score, step_count):
     # Extract health values
     prev_health = np.max([0, prev_state["health"]])
     prev_enemy_health = np.max([0, prev_state["enemy_health"]])
+
     curr_health = np.max([0, current_state["health"]])
     curr_enemy_health = np.max([0, current_state["enemy_health"]])
 
+    # compute health deltas
     player_health_lost = np.max([0, prev_health - curr_health])
     enemy_health_lost = np.max([0, prev_enemy_health - curr_enemy_health])
-    delta_score = score - prev_score
 
-    # Parameters
+    # Infer time
+    max_time = 99.0
+    curr_time = step_count * 1.0 / 60.0  # game is 60 fps
+    time_ellapsed = np.max([0, max_time - curr_time])
+
+    # Reward Scaling Constants
     alpha = 10.0  # Positive reward scaling
     beta = 10.0  # Negative penalty scaling
-    S = 0.3  # Positive score scaling
-    T = 0.0  # Time penalty scaling
+    T = 0.01  # Time penalty scaling
+    R_e = 100.0  # Round end score scaling
 
     # Base rewards
     reward_hit = alpha * enemy_health_lost
     reward_damage = -beta * player_health_lost
 
-    # reward score
-    reward_score = S * delta_score
-
     # Time penalty
-    reward_time = -T * (step_count * 1 / 60)  # 60 frames per second
+    reward_time = -T * curr_time  # 60 frames per second
+
+    # win / loss reward
+    round_over = current_state["health"] < 0 or current_state["enemy_health"] < 0
+    round_win = current_state["health"] >= 0 and current_state["enemy_health"] < 0
+    win_loss_reward = 0
+
+    if round_over:
+        win_loss_reward += R_e * (
+            curr_health - curr_enemy_health
+        )  # applies to win/loss/draw
+        win_loss_reward += (
+            R_e * time_ellapsed if round_win else -R_e * time_ellapsed
+        )  # time-based reward
 
     # Total reward
-    total_reward = reward_hit + reward_damage + reward_score + reward_time
+    total_reward = reward_hit + reward_damage + reward_time + win_loss_reward
 
     return total_reward
 
@@ -146,7 +159,7 @@ def play_game(
     frame_print_counter: int = 120,
     frame_stack_size: int = 4,
     frame_skip: int = 1,
-    agent: BaseAgent = DQNAgent(action_dim=20, state_shape=(4, 96, 96)),
+    agent: BaseAgent = RecurrentDQNAgent(action_dim=20, state_shape=(4, 96, 96)),
     load_agent: bool = True,
     room: str = "StreetFighterIISpecialChampionEdition-Genesis",
     render_mode: str = "rgb_array",
@@ -183,14 +196,13 @@ def play_game(
     # -----------------------------------------
     console.print("[bold green]--- INITIALIZING SCORE AND INFO ---[/bold green]")
     score = 0
-    # TODO: Improve the initial state if needed
+
     initial_info = {
         "health": 176,
         "enemy_health": 176,
         "matches_won": 0,
         "enemy_matches_won": 0,
     }
-    info = initial_info
     neutral_action = game_input_map(0)
 
     # -------------------------------
@@ -202,28 +214,32 @@ def play_game(
         [initial_gray for _ in range(frame_stack_size)], maxlen=frame_stack_size
     )
     initial_state = stack_frames(frame_buffer)
-    state = initial_state
-    console.print("[bold blue]Initial State Shape:[/bold blue] ", state.shape)
+    console.print("[bold blue]Initial State Shape:[/bold blue] ", initial_state.shape)
 
     # -----------------------
     # 4. START THE MAIN LOOP
     # ------------------------
     console.print("[bold green]--- STARTING GAME LOOP ---[/bold green]")
     episode_count = 0
-    total_reward = 0
-    total_score = 0
+
+    episode_results_list = []
 
     while episode_count < episodes:
         console.print(
-            f"[bold magenta]--- BEGIN EPISODE {episode_count + 1} ---[/bold magenta]"
+            f"[bold magenta]--- BEGIN EPISODE {episode_count} ---[/bold magenta]"
         )
 
         # Per-episode variables
         done = False
         truncated = False
+
         episode_reward = 0
-        episode_score = 0
+        round_reward = 0
         step_count = 0
+        round_count = 0
+
+        state = initial_state
+        info = initial_info
 
         while not done and not truncated:
             # -----------------------------------------------------
@@ -238,6 +254,7 @@ def play_game(
                 next_frame, next_score, done, truncated, next_info = env.step(
                     game_input_map(agent_action)
                 )
+                step_count += 1
 
                 # --------------------------------------------
                 # 4.3 CONVERT NEXT FRAME + UPDATE FRAME BUFFER
@@ -271,9 +288,6 @@ def play_game(
                 # -------------------------
                 # 4.7 UPDATE STATE / SCORE
                 # -------------------------
-                delta_win = next_info["matches_won"] - info["matches_won"]
-                delta_lost = next_info["enemy_matches_won"] - info["enemy_matches_won"]
-
                 state = next_state
                 score = next_score
                 info = next_info
@@ -282,100 +296,55 @@ def play_game(
                 # 4.8 ACCUMULATE REWARDS/SCORE
                 # -----------------------------
                 episode_reward += reward
-                episode_score = next_info.get("score", 0)
-                step_count += 1
+                round_reward += reward
 
-                # --------------------------------------
-                # 4.9 CHECK FOR ROUND COMPLETION EVENTS
-                # --------------------------------------
-                if delta_win > 0 or delta_lost > 0:
+                # 4.11 FRAME SKIPPING / ROUND END
+                # -------------------------------
+                if info["health"] < 0 or info["enemy_health"] < 0:
+                    agent.reset()
+
+                    # skip frames until game resets
+                    skip_info = info
+
+                    while skip_info["health"] < 0 or skip_info["enemy_health"] < 0:
+                        _, _, _, _, skip_info = env.step(neutral_action)
+
+                    # Output episode performance summary
+                    episode_result = {
+                        "episode": episode_count,
+                        "reward": episode_reward,
+                        "round_reward": round_reward,
+                        "round": round_count,
+                        "win?": info["health"] >= 0 and info["enemy_health"] < 0,
+                        "agent_epsilon": agent.epsilon,
+                    }
+                    episode_results_list.append(episode_result)
+                    pprint(episode_result)
+
+                    # reset states for next round
                     step_count = 0
-                    console.print("[bold cyan]Round over![/bold cyan]")
-
-                # ---------------------------
-                # 4.10 OPTIONAL PROGRESS LOG
-                # ---------------------------
-                if step_count % frame_print_counter == 0:
-                    console.print("[bold blue]--- INFO DICTIONARY ---[/bold blue]")
-                    pprint(info)
-                    console.print(
-                        f"[bold yellow]agent epsilon:[/bold yellow] {agent.epsilon}"
-                    )
-                    console.print(
-                        f"[bold yellow]episode score:[/bold yellow] {episode_score}"
-                    )
-                    console.print(
-                        f"[bold yellow]episode reward:[/bold yellow] {episode_reward}"
-                    )
-                    console.print(
-                        f"[bold yellow]step_count:[/bold yellow] {step_count}"
-                    )
+                    round_reward = 0
+                    round_count += 1
+                    state = initial_state
 
                 # 4.12 CHECK EPISODE COMPLETION
                 # -----------------------------
                 if (info["enemy_matches_won"] == 2) or done or truncated:
                     break
 
-                # 4.11 FRAME SKIPPING / ROUND END
-                # -------------------------------
-                if info["health"] < 0 or info["enemy_health"] < 0:
-
-                    console.print("[bold cyan]Skipping frames ...[/bold cyan]")
-                    frame_skip_counter = 0
-
-                    pprint(info)
-
-                    # skip frames until game resets
-                    while (
-                        info["health"] < 0 or info["enemy_health"] < 0
-                    ):
-                        frame_skip_counter += 1
-                        next_frame, next_score, done, truncated, info = env.step(
-                            neutral_action
-                        )
-
-                    console.print(
-                        f"[bold cyan]Skipped frames:[/bold cyan] {frame_skip_counter}"
-                    )
-                    console.print("[bold cyan]Resuming ...[/bold cyan]")
-
-                    # reset states for next round ...
-                    step_count = 0  
-                    next_info = info
-                    state = initial_state 
-
-
-
-
-
         # ----------------------------
         # 5. EPISODE COMPLETION LOGIC
         # ----------------------------
         episode_count += 1
-        total_reward += episode_reward
-        total_score += episode_score
 
-        # reset agent memory buffer
-        agent.reset()
-
-        console.print(f"[bold green]Episode {episode_count} completed![/bold green]")
-        console.print(f"\t[bold yellow]Episode Reward:[/bold yellow] {episode_reward}")
-        console.print(f"\t[bold yellow]Episode Score:[/bold yellow]  {episode_score}")
+        if episode_count % 100 == 0:
+            agent.save()
+            pd.DataFrame(episode_results_list).to_csv("tmp_results.csv")
 
         # -------------------------
         # 5.1 RESET FOR NEXT EPISODE
         # -------------------------
-        console.print(
-            "[bold green]--- RESETTING ENVIRONMENT FOR NEXT EPISODE ---[/bold green]"
-        )
-        initial_frame, info = env.reset()
-        initial_gray = preprocess_image(initial_frame)
-        frame_buffer = deque(
-            [initial_gray for _ in range(frame_stack_size)], maxlen=frame_stack_size
-        )
-        state = stack_frames(frame_buffer)
-        info = initial_info
-        score = 0
+        env.reset()
 
     # -------------------------
     # 6. TRAINING FINISHED
@@ -385,7 +354,4 @@ def play_game(
     env.close()
 
     console.print(f"[bold yellow]Total Episodes Played:[/bold yellow] {episode_count}")
-    console.print(f"[bold yellow]Total Steps Taken:[/bold yellow] {step_count}")
-    console.print(f"[bold yellow]Total Reward:[/bold yellow] {total_reward}")
-    average_score = (total_score / episodes) if episodes > 0 else 0
-    console.print(f"[bold yellow]Average Score:[/bold yellow] {average_score}")
+    pd.DataFrame(episode_results_list).to_csv("complete_results.csv")

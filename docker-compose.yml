@@ -16,5 +16,4 @@ services:
         limits:
           memory: 16g
     command: >
-      sh -c "pip install -e /home/user &&
-             jupyter notebook --ip=0.0.0.0 --no-browser --allow-root --NotebookApp.token='' --NotebookApp.password=''"
+      sh -c "jupyter notebook --ip=0.0.0.0 --no-browser --allow-root --NotebookApp.token='' --NotebookApp.password=''"

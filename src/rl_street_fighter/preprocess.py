@@ -1,10 +1,9 @@
 """Helper functions for preprocessing retro gym rgb matrices"""
 
+import cv2
 import numpy as np
 import torch
 
-import cv2
-import numpy as np
 
 def preprocess_image(rgb_array, target_size=(96, 96)):
     # Convert RGB to Grayscale
@@ -21,6 +20,7 @@ def preprocess_image(rgb_array, target_size=(96, 96)):
 
     return resized
 
+
 def stack_frames(frames):
     stacked_list = []
     for f in frames:
@@ -30,16 +30,3 @@ def stack_frames(frames):
     # Concatenate along channel dimension => (4, H, W)
     stacked_tensor = torch.cat(stacked_list, dim=0)
     return stacked_tensor
-
-
-if __name__ == "__main__":
-    # Example usage with dummy frames
-    H, W = 200, 256
-    frame1 = np.random.rand(H, W, 3).astype(np.float32)
-    frame2 = np.random.rand(H, W, 3).astype(np.float32)
-    frame3 = np.random.rand(H, W, 3).astype(np.float32)
-    frame4 = np.random.rand(H, W, 3).astype(np.float32)
-
-    frames = [frame1, frame2, frame3, frame4]
-    state = stack_frames_grayscale(frames)
-    print("Stacked shape (CHW):", state.shape)  # (4, H, W)

@@ -1,5 +1,5 @@
 import typer
-from agents.dqn_agent import DQNAgent
+from agents.dqn_recurrent_agent import RecurrentDQNAgent
 from config_loader import load_config
 from play import play_game
 from rich.console import Console
@@ -29,7 +29,7 @@ def train(
     pprint(dict(cfg.agent_settings))
 
     console.print("[bold blue]Instantiating agent ... [/bold blue]")
-    agent = DQNAgent(**dict(cfg.agent_settings))
+    agent = RecurrentDQNAgent(**dict(cfg.agent_settings))
 
     if cfg.in_agent_filepath:
         console.print("[bold red]\tFound agent path in configuration![/bold red]")
@@ -48,9 +48,10 @@ def train(
 
     console.print("[bold blue]Done![/bold blue]")
 
+
 @app.command()
 def collect():
-    pass;
+    pass
 
 
 if __name__ == "__main__":

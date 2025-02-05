@@ -1,12 +1,12 @@
 
 
-in_agent_filepath: null 
-out_agent_filepath: "./models/dqn_lstm.pth"
+in_agent_filepath: "dqn_checkpoint.pth"
+out_agent_filepath: "./models/dqn_fresh_lstm_5k.pth"
 
 train_play_game_settings:
-  episodes: 1000
+  episodes: 5000
   frame_stack_size: 4 # must match agent state_shape
-  frame_skip: 3
+  frame_skip: 2
   room: "StreetFighterIISpecialChampionEdition-Genesis"
   render_mode: "rgb_array"
   record: "./recordings_exp01/"
@@ -19,6 +19,6 @@ agent_settings:
   lr: 0.001
   epsilon_start: 1.0
   epsilon_end: 0.05
-  epsilon_decay: 1.0e-6
-  target_update_freq: 24_000
-  replay_capacity: 45_000
+  epsilon_decay: 1.0e-7
+  target_update_freq: 48_000
+  replay_capacity: 80_000
