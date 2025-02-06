@@ -255,3 +255,5 @@ class RecurrentDQNAgent(BaseAgent):
         self.optimizer.load_state_dict(checkpoint["optimizer"])
         self.epsilon = checkpoint["epsilon"]
         self.learn_step_counter = checkpoint["learn_step_counter"]
+
+        self.epsilon = 1.0

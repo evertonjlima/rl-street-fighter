@@ -297,7 +297,10 @@ def play_game(
 
                 # 4.11 FRAME SKIPPING / ROUND END
                 # -------------------------------
-                if info["health"] < 0 or info["enemy_health"] < 0:
+                round_timer = step_count * 1.0/60.0
+
+                # round over conditions are win / loss / draw / timeout
+                if info["health"] < 0 or info["enemy_health"] < 0 or round_timer >= 100:
                     agent.reset()
 
                     # skip frames until game resets
@@ -312,8 +315,10 @@ def play_game(
                         "reward": episode_reward,
                         "round_reward": round_reward,
                         "round": round_count,
-                        "win?": info["health"] >= 0 and info["enemy_health"] < 0,
+                        "win?": info["health"] > info["enemy_health"],
                         "agent_epsilon": agent.epsilon,
+                        "timer": round_timer,
+                        "step_count": step_count,
                     }
                     episode_results_list.append(episode_result)
                     pprint(episode_result)
