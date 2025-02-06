@@ -7,14 +7,14 @@ from rich.table import Table
 console = Console()
 
 
-def pretty_print_info(info: Dict[str, Any]) -> None:
+def pretty_print_info(info: Dict[str, Any], title: str = "Game Info") -> None:
     """
     Pretty prints the info dictionary using rich's Table.
 
     Args:
         info (Dict[str, Any]): The dictionary containing game information to be printed.
     """
-    table = Table(title="Game Info", show_header=True, header_style="bold magenta")
+    table = Table(title=title, show_header=True, header_style="bold magenta")
     table.add_column("Key", style="dim", justify="left")
     table.add_column("Value", justify="right")
 

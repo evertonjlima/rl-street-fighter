@@ -1,0 +1,25 @@
+
+
+in_agent_filepath: "dqn_checkpoint.pth"
+out_agent_filepath: "./models/dqn_fresh_lstm_5k.pth"
+out_results_filepath: "./models/dqn_fresh_lstm_5k.path"
+
+train_play_game_settings:
+  episodes: 5000
+  frame_stack_size: 4
+  frame_skip: 2
+  room: "StreetFighterIISpecialChampionEdition-Genesis"
+  render_mode: "rgb_array"
+  record: "./recordings_exp01/"
+
+
+agent_settings:
+  action_dim: 20
+  state_shape: !!python/tuple [4, 96, 96]
+  gamma: 0.99
+  lr: 0.001
+  epsilon_start: 1.0
+  epsilon_end: 0.05
+  epsilon_decay: 1.0e-7
+  target_update_freq: 48_000
+  replay_capacity: 80_000

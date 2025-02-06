@@ -49,7 +49,7 @@ class DQNetwork(nn.Module):
         self.conv1 = nn.Conv2d(in_channels, 8, kernel_size=kernel_size, stride=stride)
         self.conv2 = nn.Conv2d(8, 16, kernel_size=kernel_size, stride=stride)
 
-        self.fc1 = nn.Linear(16 * 47 * 61, 256)
+        self.fc1 = nn.Linear(16 * 21 * 21, 256)
         self.fc2 = nn.Linear(256, action_dim)
 
     def prepare_input(self, x: np.ndarray):
@@ -93,7 +93,7 @@ class DQNAgent(BaseAgent):
         lr=0.001,
         batch_size=16,
         epsilon_start=1.0,
-        epsilon_end=0.1,
+        epsilon_end=0.05,
         epsilon_decay=1e-6,
         target_update_freq=24_000,
         replay_capacity=35_000,
@@ -278,6 +278,9 @@ class DQNAgent(BaseAgent):
             print("updating target network ...")
             self.update_target_network()
 
+    def reset(self):
+        pass
+
     def save(self, filename="dqn_checkpoint.pth"):
         """
         Save model and optimizer states.
@@ -299,5 +302,6 @@ class DQNAgent(BaseAgent):
         self.policy_network.load_state_dict(checkpoint["policy_network"])
         self.target_network.load_state_dict(checkpoint["target_network"])
         self.optimizer.load_state_dict(checkpoint["optimizer"])
-        self.epsilon = checkpoint["epsilon"]
+        # self.epsilon = checkpoint["epsilon"]
+        self.epsilon = 0.5
         self.learn_step_counter = checkpoint["learn_step_counter"]

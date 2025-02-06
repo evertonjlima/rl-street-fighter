@@ -21,6 +21,8 @@ data/
 
 # Notebooks
 .ipynb_checkpoints/
+notepad/
 
 # Environment
+./stable-retro/
 .env
