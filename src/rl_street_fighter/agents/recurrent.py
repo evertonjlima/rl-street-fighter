@@ -17,6 +17,7 @@ class RecurrentDQNetwork(nn.Module):
         num_lstm_layers=1,
     ):
         super(RecurrentDQNetwork, self).__init__()
+        self.action_dim = action_dim
 
         self.conv1 = nn.Conv2d(in_channels, 8, kernel_size=kernel_size, stride=stride)
         self.conv2 = nn.Conv2d(8, 16, kernel_size=kernel_size, stride=stride)
@@ -26,11 +27,11 @@ class RecurrentDQNetwork(nn.Module):
         self.cnn_out_size = 32 * 9 * 9
 
         # Fully-connected layer to reduce dimension before LSTM
-        self.fc1 = nn.Linear(self.cnn_out_size, 256)
+        self.fc1 = nn.Linear(self.cnn_out_size, self.action_dim * 2)
 
         # LSTM: input_size=256, hidden_size=hidden_size
         self.lstm = nn.LSTM(
-            input_size=256,
+            input_size=self.action_dim * 2,
             hidden_size=hidden_size,
             num_layers=num_lstm_layers,
             batch_first=True,
@@ -52,7 +53,8 @@ class RecurrentDQNetwork(nn.Module):
         bsz, seq_len, C, H, W = x.shape
 
         # 1) Flatten the sequence dimension into batch for CNN
-        x = x.view(bsz * seq_len, C, H, W)
+        # x = x.view(bsz * seq_len, C, H, W)
+        x = x.reshape(bsz * seq_len, C, H, W)
 
         # 2) CNN feature extraction
         x = F.relu(self.conv1(x))
@@ -63,7 +65,7 @@ class RecurrentDQNetwork(nn.Module):
         x = F.relu(self.fc1(x))  # => [bsz*seq_len, 256]
 
         # 3) Reshape for LSTM: [bsz, seq_len, 256]
-        x = x.view(bsz, seq_len, 256)
+        x = x.view(bsz, seq_len, self.action_dim * 2)
 
         # 4) LSTM over the time dimension
         x, hidden_out = self.lstm(x, hidden)
