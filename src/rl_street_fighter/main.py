@@ -7,7 +7,7 @@ from rich.console import Console
 from utils import pretty_print_info as pprint
 
 console = Console()
-app = typer.Typer(help="AI plays Street Fighter Project")
+app = typer.Typer(help="Reinforcement Learning Street Fighter II")
 
 
 @app.command()
@@ -48,7 +48,7 @@ def train(
     console.print(f"[bold blue]Agent saved: {cfg.out_agent_filepath}")
 
     console.print("[bold blue]Saving results...")
-    pd.DataFrame(results).to_csv(cfg.out_results_filepath)
+    pd.DataFrame(results["live"]).to_csv(cfg.out_results_filepath)
     console.print(f"[bold blue]Results saved: {cfg.out_results_filepath}")
 
     console.print("[bold blue]Done![/bold blue]")
@@ -56,6 +56,7 @@ def train(
 
 @app.command()
 def collect():
+    # TODO: Under construction!
     pass
 
 

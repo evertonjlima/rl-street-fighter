@@ -15,10 +15,17 @@ def preprocess_image(rgb_array, target_size=(96, 96)):
     # Enhance contrast using Histogram Equalization
     equalized = cv2.equalizeHist(grayscale)
 
-    # Resize to target size
     resized = cv2.resize(equalized, target_size, interpolation=cv2.INTER_AREA)
 
-    return resized
+    # Normalize the pixel values to range [0, 1]
+    normalized = resized.astype(np.float32) / 255.0
+
+    # Convert to float16 to reduce memory usage
+    processed = normalized.astype(np.float16)
+
+    # Resize to target size
+
+    return processed
 
 
 def stack_frames(frames):
